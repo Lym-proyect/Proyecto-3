@@ -1,0 +1,144 @@
+
+using gold.structures.automaton.*
+using gold.visualization.automaton.*
+using gold.structures.map.*
+
+procedure main ( args : String [ ] ) begin
+	c = createCoder ( ) 
+	d = createDecoder( )
+	Utilities.testCodeDecode(c,d)
+	
+end
+
+
+
+
+function createCoder ( ) : ITransducer begin
+
+	Q := {"I", "F", "E"} ∪ (('a'‥'z')×(0‥2))
+
+	Σ := ( 'a' ‥ 'z' ) ∪ {' ', '$'}
+	Out := ( '0' ‥ '2' ) ∪ ( 'a' ‥ 'z' ) ∪ { '$', '*'}
+
+	q₀ := "I"
+	F := {"F"} 
+	return GDeterministicTransducer ( Q , Σ , Out , q₀ , F , δ , g , h )
+end
+
+function createDecoder ( ) : ITransducer begin
+
+	Q := {"I", "F", "E"} ∪ (('a'‥'z')×(0‥2)) ∪ { '$', '*'} 
+	In := ( '0' ‥ '2' ) ∪ ( 'a' ‥ 'z' ) ∪ { '$', '*'} 
+	Out:= ( 'a' ‥ 'z' ) ∪ {' ', '$'} 
+	q₀ := "I"
+	F := {"F"} 
+	return GDeterministicTransducer ( Q , In , Out , q₀ , F , δ1 , g1 , h1 )
+end
+
+
+
+function δ ( q, s ) begin
+	if q="I" and s='$' then return "F"
+	elseif q="I" and  s ∈ ('a'‥'z') then  return ⟨s,0⟩
+	else return "E"	
+	
+	end
+end
+
+function δ (⟨first,count⟩, s) begin
+  if s = '$' then return "F"
+  
+  elseif s=' ' then return "I"
+  	
+  	
+  elseif  s=first then return ⟨first, (count+1)% 3⟩
+  else return  ⟨first,count⟩
+  end
+
+end
+
+ function h ( q, s ) begin
+	if q="I" and s='$' then return s
+	elseif q="I" and  s ∈ ('a'‥'z') then return s
+	else return λ	
+	
+	end
+end
+
+function h (⟨first,count⟩, s) begin
+  if s = '$' then return ""+count+"$"
+  
+  elseif s=' ' then return ""+count
+  	
+  	
+  elseif  s=first then return  "*"
+  else return  s
+  end
+
+end
+
+function g ( q ) begin
+	return λ
+end
+
+function g1 ( q ) begin
+	return λ
+end
+
+
+function δ1 ( q, s ) begin
+	
+  if q = "I" and s = '$' then return "F"
+  
+  elseif q="I" and s ∈ ('a'‥'z') then return ⟨s,0⟩
+  	
+  else return "E"
+  
+  end
+  	
+end
+
+function δ1 ( ⟨first,count⟩, s ) begin
+	
+  if  s = '$' then return "F"
+  
+  elseif  s ∈ ('0'‥'2') then return "I"
+  
+  elseif s = first then return ⟨first, count⟩
+  	
+  else return ⟨first, count⟩
+  	
+  end
+  	
+end
+
+
+
+function h1 ( q, s ) begin
+	
+  if q="I" and s='$' then return s
+  	
+  elseif q="I" and  s ∈ ('a'‥'z') then return s
+  
+  elseif q ∈ ('a'‥'z') then return q
+  	
+  elseif q ∈ ('0'‥'2') and s != "$" then return " "
+  
+  elseif q ∈ ('0'‥'2') and s = "$" then return ""
+  	
+  else return λ
+
+  end
+end
+
+function h1 ( ⟨first,count⟩, s ) begin
+	
+  if s = '*' then return first
+  elseif s ∈ ('a'‥'z') then return s
+  elseif s ∈ ('0'‥'2') then return " "
+  
+  else return λ
+  	
+  end
+end
+

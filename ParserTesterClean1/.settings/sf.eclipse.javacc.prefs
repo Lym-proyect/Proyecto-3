@@ -1,0 +1,16 @@
+CLEAR_CONSOLE=true
+FORMAT_BEFORE_SAVE=false
+JAVACC_OPTIONS=
+JJDOC_OPTIONS=
+JJTREE_OPTIONS=
+JJ_NATURE=false
+JTB_OPTIONS=-tk -ia -jd
+KEEP_DEL_FILES_IN_HISTORY=false
+MARK_GEN_FILES_AS_DERIVED=true
+RUNTIME_JAVAPATH=
+RUNTIME_JJJAR=/Users/air/Documents/JAVACC/javacc-javacc-7.0.12/target/javacc-7.0.12.jar
+RUNTIME_JTBADDCLASSPATH=
+RUNTIME_JTBJAR=/Applications/Eclipse.app/Contents/Eclipse/plugins/sf.eclipse.javacc_.core1.6.0.jar\!/jars/jtb-1.5.0.jar
+RUNTIME_JVMOPTIONS=
+SUPPRESS_WARNINGS=false
+eclipse.preferences.version=1

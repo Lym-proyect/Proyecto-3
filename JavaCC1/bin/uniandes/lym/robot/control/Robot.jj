@@ -1,0 +1,546 @@
+/*
+Gramatica para el Robot:
+Autor: Alejandro Arango
+Modificado por: Silvia Takahashi
+Modificado por: Juan Pablo Morales.
+Agregadas producciones para manejar globos
+Modificado por Silvia Takahashi
+
+
+ **/
+
+
+options 
+{
+  
+	LOOKAHEAD=3; 
+	IGNORE_CASE=true;
+	STATIC = false;
+	
+}
+   
+
+PARSER_BEGIN(Robot)
+
+package uniandes.lym.robot.control;
+
+import uniandes.lym.robot.kernel.*;
+import uniandes.lym.robot.view.Console;
+ 
+import java.awt.Point;
+import java.io.*;
+import java.util.Vector;
+import java.util.LinkedList;
+
+
+@SuppressWarnings("serial")
+public class Robot 
+{
+
+
+	private RobotWorldDec world;
+	
+	
+	void setWorld(RobotWorld w) {
+		world = (RobotWorldDec) w;	
+	}
+
+
+
+	String salida=new String();
+	ArrayList<Object> lista = new ArrayList< >();
+}
+PARSER_END(Robot)
+
+SKIP:
+{
+	" "
+	|	"\r"
+	|	"\t"
+	| 	"\n"
+}
+
+TOKEN: /* Nombres de Comandos  */
+{
+
+			<MOV:  "Mov">
+		| 	<RIGHT: "RIGHT">
+		| 	<PUT: "Put"> 
+		| 	<PICK: "Pick">
+		|  < POP: "Pop" >
+		|  <GO: "GO" >
+        |  < HOP:  "HOP" >
+        |  < JUMP:  "JUMP">
+        |  < WALK:  "WALK">
+        |  < LEAP:  "LEAP">
+        |  < TURN:  "TURN">
+        |  < TURNTO:  "TURNTO">
+        |  < DROP:  "DROP">
+        |  < GET:  "GET">
+        |  < GRAB:  "GRAB">
+        |  < LETGO:  "LETGO">
+        |  < NOP:  "NOP">
+        |  < DEFVAR:  "DEFVAR">
+        |  < DEFPROC:  "DEFPROC">
+        | 	<FRONT: "FRONT" >
+        | 	<LEFT: "LEFT" >
+        | 	<BACK: "BACK" >
+        | 	<AROUND: "AROUND" >
+        | 	<NORTH: "NORTH" >
+        | 	<SOUTH: "SOUTH" >
+        | 	<EAST: "EAST" >
+        | 	<WEST: "WEST" >
+        
+
+}
+
+TOKEN: /* Comandos  de accion */
+{
+		<IF:  "IF">
+		|	< ELSE: "ELSE">
+		|	<WHILE: "WHILE" >
+		|	<REPEAT: "REPEAT">	
+		|	<TIMES: "TIMES">
+		| 	<IGUAL: "=" >
+		| 	<OC: "{" >
+		| 	<CC: "}" >
+		| 	<OP: "(" >
+		| 	<CP: ")" >
+		| 	<COMA: "," >
+		| 	<POINTS: ":" >
+		
+		
+
+}
+
+
+TOKEN :
+{
+		<FACING: "FACING" >
+		|  	<CAN: "CAN">
+		|  	<NOT: "NOT">
+        
+}
+
+
+TOKEN:
+{
+		<BALLOONS:  "BALLOONS" >
+		|	<CHIPS:     "CHIPS"  >	
+
+}
+
+
+
+TOKEN :
+{
+		<NUM: (<DIGIT>)+ >
+		|  	<#DIGIT: ["0"-"9"] >
+		|  	<#LETRA: ["a"-"z", "A"-"Z"] >
+		|  	<ID:  (<LETRA>) (<LETRA>|<NUM>)*>
+		|  	<CADENA:  "\"" (~["\""])+ "\"" >
+        
+}
+
+//Analizador sintactico  
+
+void declararVariable():
+{}
+{      (        <ID> <IGUAL> valor()
+      )	
+}
+
+void simpleCommands():
+{}
+{
+  declararVariable() | walk() | leap() | turn() | turnTo() | drop() | Get() | grab() | letGo() | nop() 
+}
+
+void defVar():
+{}
+{
+  <DEFVAR> <ID> valor()
+}
+
+void defProc():
+{}
+{
+  <DEFPROC> <ID> listaParametros() blockCommands()
+}
+
+void listaParametros():
+{}
+{
+  <OP> opcionesP() <CP> 
+}
+
+void blockCommands():
+{}
+{
+  <OC> (simpleCommands()) (<COMA> simpleCommands())* <CC> 
+}
+
+void jump():
+{}
+{
+  <JUMP> <OP> num() <COMA> num()  <CP>
+}
+
+int walk():
+{ int x = 1;
+  String d = "";
+  lista = new ArrayList< >();}
+{
+  <WALK> <OP> x = num() (<COMA> (d = direction()|directionCar()))* <CP>
+  { lista.add(x,d);
+    return lista;}
+  
+}
+
+void leap():
+{ int x = 1;
+  String d = "";
+  lista = new ArrayList< >();}
+{
+  <LEAP> <OP> x = num() (<COMA> (d = direction()|directionCar()))* <CP>
+  { lista.add(x,d);
+    return lista;}
+}
+
+void turn():
+{String d = "";}
+{
+  <TURN> <OP> d = directionTurn() <CP>
+   { return d; }
+}
+
+void turnTo():
+{String d = "";}
+{
+  <TURNTO> <OP> d = directionCar() <CP>
+  { return d;}
+}
+
+void drop():
+{}
+{
+  <DROP> <OP> num() <CP>
+}
+
+void Get():
+{}
+{
+  <GET> <OP> num() <CP>
+}
+
+void grab():
+{}
+{
+  <GRAB> <OP> num() <CP>
+}
+
+void letGo():
+{}
+{
+  <LETGO> <OP> num() <CP>
+}
+
+void nop():
+{}
+{
+  <NOP> <OP> <CP>
+}
+
+void facing():
+{}
+{
+  <FACING > <OP> directionCar() <CP>
+}
+
+void can():
+{}
+{
+  <CAN> <OP> simpleCommands() <CP>
+}
+
+void not():
+{}
+{
+  <NOT> <POINTS> (facing()|can())
+}
+
+
+void conditional():
+{}
+{
+  <IF> condition() blockCommands() <ELSE> blockCommands()
+}
+
+void loop():
+{}
+{
+  <WHILE> condition() blockCommands() 
+}
+
+void repeatTimes():
+{}
+{
+  <REPEAT> num() <TIMES> blockCommands() 
+}
+
+void condition():
+{}
+{
+ facing() | can() | not()
+}
+
+void directionCar():
+
+{String directionCar = "";}
+
+{
+  
+<NORTH> | <SOUTH> | <EAST> | <WEST>
+		{
+			try 
+			{
+				directionCar = String.parseString(token.image);
+			} 
+			catch (NumberFormatException ee) 
+			{
+				throw new Error("Number out of bounds: "+token.image+" !!");
+			}
+			return directionCar;
+		}
+}
+		
+void direction():
+{
+  String direction = "";
+}
+{
+  
+<RIGHT> | <LEFT> | <FRONT> | <BACK>
+
+		{
+			try 
+			{
+				direction = String.parseString(token.image);
+			} 
+			catch (NumberFormatException ee) 
+			{
+				throw new Error("Number out of bounds: "+token.image+" !!");
+			}
+			return direction;
+		}
+}
+
+void directionTurn():
+{}
+{
+  <RIGHT> | <LEFT> | <AROUND>
+}
+
+void opcionesP():
+{}
+{
+  valor() (<COMA> valor())*
+}
+
+void valor():
+{}
+{
+    num()|<CADENA> | <ID>
+}
+
+
+
+	//boolean command(uniandes.lym.robot.view.Console sistema) :
+	boolean command(Console sistema):
+	{	
+		int x,y;
+		salida=new String();
+		lista = new ArrayList< >();
+		String direccion;
+		String ir;
+	}
+
+	
+	{
+		(		  ( 	 	 	 	 	 	 		 	
+		   <RIGHT> "(" ")" {world.turnRight();salida = "Command: Turnright";}
+		| 	<MOV>  "(" x=num() ")" {world.moveForward(x,false);salida = "Command: Moveforward ";}  
+		| 	<HOP>  "(" x=num() ")" {world.moveForward(x,true);salida = "Command:Jumpforward ";}
+		| 	<GO>  "(" x=num() "," y=num()")" {world.setPostion(x,y);salida = "Command:GO ";}  
+		|  <PUT> "("  put() ")"					  			
+		|  <PICK> "(" get()  ")"	
+	    |  <POP> "(" x=num() ")" {world.popBalloons(x); salida = "Comando:  Pop";}
+	    //|  <JUMP>  "(" x=num() "," y=num()")" {world.setPostion(x,y);salida = "Command:JUMP ";}
+	    |  declararVariable() {salida = "Variable declarada! ";}
+	    |  defVar() {salida = " defVar realizado!";}
+	    |  defProc() {salida = " defProc realizado!";}
+	    |  lista = walk() {x = (int)lista.get(0); ir = (String)lista.get(1)
+	      				   if(ir == "" || ir == "front") {world.moveForward(x, false);}
+	    
+	    				   else {direccion = world.getFacing;
+	    				   		 else if (direccion == "north" && ir == "east") {world.turnRight();}
+	    				   		 else if (direccion == "north" && ir == "south") {world.turnRight(); world.turnRight(); world.moveForward(x, false);}
+	    				   		 else if (direccion == "north" && ir == "west") {world.turnRight(); world.turnRight(); world.turnRight(); world.moveForward(x, false);}
+	    				   		 else if (direccion == "east" && ir == "south") {world.turnRight(); world.moveForward(x, false);}
+	    				   		 else if (direccion == "east" && ir == "west") {world.turnRight(); world.turnRight(); world.moveForward(li, false);}
+	    				   		 else if (direccion == "east" && ir == "north") {world.turnRight(); world.turnRight(); world.turnRight(); world.moveForward(x, false);}
+	    				   		 else if (direccion == "south" && ir == "west") {world.turnRight(); world.moveForward(x, false);}
+	    				   		 else if (direccion == "south" && ir == "north") {world.turnRight(); world.turnRight(); world.moveForward(x, false);}
+	    				   		 else if (direccion == "south" && ir == "east") {world.turnRight(); world.turnRight(); world.turnRight(); world.moveForward(x, false);}
+	    				   		 else if (direccion == "west" && ir == "north") {world.turnRight(); world.moveForward(x, false);}
+	    				   		 else if (direccion == "west" && ir == "east") {world.turnRight(); world.turnRight(); world.moveForward(x, false);}
+	    				   		 else if (direccion == "west" && ir == "south") {world.turnRight(); world.turnRight(); world.turnRight(); world.moveForward(x, false);}
+	    				   		 else if (direccion == "north" && ir == "left") {world.turnRight(); world.moveForward(x, false); world.turnRight(); world.turnRight(); world.turnRight();}
+	    				   		 else if (direccion == "north" && ir == "right") {world.turnRight(); world.turnRight(); world.turnRight(); world.moveForward(x, false); world.turnRight();}
+	    				   		 else if (direccion == "north" && ir == "back") {world.turnRight(); world.turnRight(); world.moveForward(x, false); world.turnRight(); world.turnRight();}
+	    				   		 else if (direccion == "east" &&ir == "left") {world.turnRight(); world.moveForward(x, false); world.turnRight(); world.turnRight(); world.turnRight(); world.turnRight();}
+	    				   		 else if (direccion == "east" && ir == "right") {world.turnRight(); world.turnRight(); world.turnRight(); world.moveForward(x, false); world.turnRight();}
+	    				   		 else if (direccion == "east" && ir == "back") {world.turnRight(); world.turnRight(); world.moveForward(x, false); world.turnRight(); world.turnRight();}
+	    				   		 else if (direccion == "south" && ir == "left") {world.turnRight(); world.moveForward(x, false); world.turnRight(); world.turnRight(); world.turnRight();}
+	    				   		 else if (direccion == "south" && ir == "right") {world.turnRight(); world.turnRight(); world.turnRight(); world.turnRight(); world.moveForward(x, false); world.turnRight();}
+	    				   		 else if (direccion == "south" && ir == "back") {world.turnRight(); world.turnRight(); world.moveForward(x, false); world.turnRight(); world.turnRight();}
+	    				   		 else if (direccion == "west" && ir == "left") {world.turnRight(); world.moveForward(x, false); world.turnRight(); world.turnRight(); world.turnRight();}
+	    				   		 else if (direccion == "west" && ir == "right") {world.turnRight(); world.turnRight(); world.turnRight(); world.moveForward(x, false); world.turnRight();}
+	    				   		 else if (direccion == "west" && ir == "back") {world.turnRight(); world.turnRight(); world.moveForward(x, false); world.turnRight(); world.turnRight();}
+	    				   		 }
+	    				   salida = "Command: walk ";}
+
+	    |  jump() {x = (int)lista.get(0); ir = (String)lista.get(1)
+	      				   if(ir == "" || ir == "front") {world.moveForward(x, false);}
+	    
+	    				   else {direccion = world.getFacing;
+	    				   		 else if (direccion == "north" && ir == "east") {world.turnRight();}
+	    				   		 else if (direccion == "north" && ir == "south") {world.turnRight(); world.turnRight(); world.moveForward(x, false);}
+	    				   		 else if (direccion == "north" && ir == "west") {world.turnRight(); world.turnRight(); world.turnRight(); world.moveForward(x, false);}
+	    				   		 else if (direccion == "east" && ir == "south") {world.turnRight(); world.moveForward(x, false);}
+	    				   		 else if (direccion == "east" && ir == "west") {world.turnRight(); world.turnRight(); world.moveForward(li, false);}
+	    				   		 else if (direccion == "east" && ir == "north") {world.turnRight(); world.turnRight(); world.turnRight(); world.moveForward(x, false);}
+	    				   		 else if (direccion == "south" && ir == "west") {world.turnRight(); world.moveForward(x, false);}
+	    				   		 else if (direccion == "south" && ir == "north") {world.turnRight(); world.turnRight(); world.moveForward(x, false);}
+	    				   		 else if (direccion == "south" && ir == "east") {world.turnRight(); world.turnRight(); world.turnRight(); world.moveForward(x, false);}
+	    				   		 else if (direccion == "west" && ir == "north") {world.turnRight(); world.moveForward(x, false);}
+	    				   		 else if (direccion == "west" && ir == "east") {world.turnRight(); world.turnRight(); world.moveForward(x, false);}
+	    				   		 else if (direccion == "west" && ir == "south") {world.turnRight(); world.turnRight(); world.turnRight(); world.moveForward(x, false);}
+	    				   		 else if (direccion == "north" && ir == "left") {world.turnRight(); world.moveForward(x, false); world.turnRight(); world.turnRight(); world.turnRight();}
+	    				   		 else if (direccion == "north" && ir == "right") {world.turnRight(); world.turnRight(); world.turnRight(); world.moveForward(x, false); world.turnRight();}
+	    				   		 else if (direccion == "north" && ir == "back") {world.turnRight(); world.turnRight(); world.moveForward(x, false); world.turnRight(); world.turnRight();}
+	    				   		 else if (direccion == "east" &&ir == "left") {world.turnRight(); world.moveForward(x, false); world.turnRight(); world.turnRight(); world.turnRight(); world.turnRight();}
+	    				   		 else if (direccion == "east" && ir == "right") {world.turnRight(); world.turnRight(); world.turnRight(); world.moveForward(x, false); world.turnRight();}
+	    				   		 else if (direccion == "east" && ir == "back") {world.turnRight(); world.turnRight(); world.moveForward(x, false); world.turnRight(); world.turnRight();}
+	    				   		 else if (direccion == "south" && ir == "left") {world.turnRight(); world.moveForward(x, false); world.turnRight(); world.turnRight(); world.turnRight();}
+	    				   		 else if (direccion == "south" && ir == "right") {world.turnRight(); world.turnRight(); world.turnRight(); world.turnRight(); world.moveForward(x, false); world.turnRight();}
+	    				   		 else if (direccion == "south" && ir == "back") {world.turnRight(); world.turnRight(); world.moveForward(x, false); world.turnRight(); world.turnRight();}
+	    				   		 else if (direccion == "west" && ir == "left") {world.turnRight(); world.moveForward(x, false); world.turnRight(); world.turnRight(); world.turnRight();}
+	    				   		 else if (direccion == "west" && ir == "right") {world.turnRight(); world.turnRight(); world.turnRight(); world.moveForward(x, false); world.turnRight();}
+	    				   		 else if (direccion == "west" && ir == "back") {world.turnRight(); world.turnRight(); world.moveForward(x, false); world.turnRight(); world.turnRight();}
+	    				   		 }
+
+	      			salida = " jump realizado!";}
+	    |  lista = leap() {salida = " leap realizado!";}
+	    |  direccion = turn() { if (direccion == "left") {world.turnRight();}
+	    						else if (direccion == "right") {world.turnRight(); world.turnRight(); world.turnRight(); }
+	    						else {world.turnRight(); world.turnRight(); }
+
+	      			salida = " turn realizado!";}
+	    |  direccion = turnTo() ir = world.getFacing
+	    					  { if (direccion == "east" && ir == "north") {world.turnRight();}
+	    						else if (direccion == "south" && ir == "north") {world.turnRight(); world.turnRight();}
+	    						else if (direccion == "west" && ir == "north") {world.turnRight(); world.turnRight(); world.turnRight();}
+	    						else if (direccion == "south" && ir == "east") {world.turnRight();}
+	    						else if (direccion == "west" && ir == "east") {world.turnRight(); world.turnRight();}
+	    						else if (direccion == "north" && ir == "east") {world.turnRight(); world.turnRight(); world.turnRight();}
+	    						else if (direccion == "north" && ir == "south") {world.turnRight(); world.turnRight();}
+	    						else if (direccion == "west" && ir == "south") {world.turnRight();}
+	    						else if (direccion == "east" && ir == "south") {world.turnRight(); world.turnRight(); world.turnRight();}
+	    						else if (direccion == "north" && ir == "west") {world.turnRight();}
+	    						else if (direccion == "east" && ir == "west") {world.turnRight(); world.turnRight();}
+	    						else if (direccion == "south" && ir == "west") {world.turnRight(); world.turnRight(); world.turnRight();}
+	    						else { }
+
+
+	      			salida = " turnTo realizado!";}
+	    |  drop() {salida = " drop realizado!";}
+	    |  Get() {salida = " get realizado!";}
+	    |  grab() {salida = " grab realizado!";}
+	    |  letGo() {salida = " letgo realizado!";}
+	    |  nop() {salida = " nop realizado!";}
+	    |  conditional() {salida = " conditional realizado!";}
+	    |  loop() {salida = " loop realizado!";}
+	    |  repeatTimes() {salida = " repeatTimes realizado!";}
+		) ";" 
+
+		{
+		    try {
+	    			 Thread.sleep(900);
+	    	    } catch (InterruptedException e) {
+	    			        System.err.format("IOException: %s%n", e);
+	    		    }
+	    			 
+			sistema.printOutput(salida);
+			return true;
+		})+
+
+    	| <EOF> {return false;} 
+	}
+
+	
+
+
+	void put() :
+	{
+		int f=1;	
+	}
+	{
+		( <CHIPS>    "," f=num() {world.putChips(f); salida = "Command:  Put Chips"; })
+		|  	  ( <BALLOONS>   "," f=num() {world.putBalloons(f); salida = "Command:  Put Balloons";})	 
+
+	}
+
+	void get() :
+	{
+		int f=1;	
+	}
+	{
+		( <CHIPS>   "," f=num() {world.pickChips(f);salida = "Command:  Pick chips";})
+		|  	  ( <BALLOONS>   "," f=num() {world.grabBalloons(f);salida="Command:  Pick balloons";})	 
+
+	}
+
+	
+
+	
+
+	
+	
+
+	/**
+	 * Unsigned decimal number
+	 * @return the corresponding value of the string
+	 * @error  corresponding value is too large
+	 */
+
+	int num() throws Error:
+	{	
+		int total=1;
+	}
+	{
+		<NUM>
+		{
+			try 
+			{
+				total = Integer.parseInt(token.image);
+			} 
+			catch (NumberFormatException ee) 
+			{
+				throw new Error("Number out of bounds: "+token.image+" !!");
+			}
+			return total;
+		}
+	}
+
+	

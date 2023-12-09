@@ -1,0 +1,270 @@
+using gold.**
+
+//Federico Bogota 202214825
+//Carlos Casadiego 202212187
+
+toSet(C) :=  {x|  x in C}
+
+///====   mini Parser===
+
+
+function createParser(A):IPushdownAutomaton begin
+	Q:={0,"Start","Vars","Procs","pr1Id","pr2[", "pr3|", "pr4|","pr5]",
+	"move1","move2","move3","Id","Id2","Instructions","Instructions2","blockOrProc",
+	"block","blockEnd", "if","if2:","if3then", "if4:","if5else", "if6:", "not" ,"not2:", "nCondition",
+	"condition" , "facing", "facing2:", "facing3c", "repeat", "repeat2:" , "repeat3idnt", "while", "while2:"
+	, "while3do", "while4:", "finCondicional","callProc","callProc2:","callProc3idnt", "callProc4,"
+	,"canP1","canP2","canP3","canP4","canM1","canM2","canM3","canM4","canT1","canT2","canT3","canT4", "turn1","turn2",
+	"face1","face2","nop", "P1","P2", "P3", "P4", "MJTo1","MJTo2","MJTo3","MJTo4", "MJin1","MJin2","MJin3","MJin4", 
+	"assignTo1","assignTo2","assignTo3","assignTo4"}
+	//(0‥8) ∪ 
+	Σ:=toSet(A)  ∪ {' ', '\n'}
+	/*
+	 * 'v' para el control de vars, 'b' para el control de las variables en una función, 'p' para el control de funciones
+	 * '[' para llevar el control de los bloques, 'i' para llevar el control de los if, 'w' para llevar el control de los while 
+	 */
+	Γ:={'v','b','p','[','i','w'}
+	q₀:=0
+	F:= {"pr5]"}
+	M:=GPushdownAutomaton(Q,Σ,Γ,q₀,{"blockEnd","pr5]"})
+SkipChars := {' ', '\n'}   // this will only  be used when testing only the parser as the lexer removes  SkipChars
+	
+// transitions for  moveToThe:  var, right 
+
+/* 
+M.delta(0,1,'M').ignore()
+M.delta(1,2,':').ignore()
+M.delta(2,3,'v').ignore()
+M.delta(3,4,',').ignore()
+M.delta(4,0,'r').ignore()
+ 
+ // transitions for  move:  number
+M.delta(0,5,'m').ignore()
+M.delta(5,6,':').ignore()
+M.delta(6,0,'#').ignore()
+
+// transitions for  face:  north
+ 
+M.delta(0,7,'f').ignore()
+M.delta(7,8,':').ignore()
+M.delta(8,0,'n').ignore() 
+*/
+
+//Comandos de inicialización
+M.delta(0,"Start",'R').ignore()
+M.delta("Start","block",'[').ignore()
+M.delta("Start","Vars",'V').ignore()
+M.delta("Start","Procs",'P').ignore()
+M.delta("Vars","Id",'v').push("v")
+
+//Asignar las variables: Id2 estado intermedio después de leer la coma
+M.delta("Id","Id2",',').ignore()
+M.delta("Id2","Id",'v').ignore()
+M.delta("Id","blockOrProc",';').pop("v")
+M.delta("Id","pr4|",'|').pop("b")
+
+//Saber si despues de las variables va un bloque o funciones
+M.delta("blockOrProc","Procs",'P').ignore()
+M.delta("blockOrProc","block",'[').ignore()
+
+
+//Manejo de procs (funciones)
+M.delta("Procs","pr1Id",'v').push("p")//p
+M.delta("pr1Id","pr2[",'[').ignore()
+M.delta("pr2[","pr3|",'|').ignore()
+M.delta("pr3|","Id",'v').push("b")
+M.delta("pr3|","pr4|",'|').ignore()
+M.delta("pr4|","Instructions","").ignore()
+M.delta("pr5]","Procs",'v').ignore()
+M.delta("pr5]","block",'[').ignore()
+
+//Manejo de instrucciones
+	//Comandos de un parametro
+M.delta("Instructions","move1",'m').ignore()
+M.delta("Instructions", "turn1",'t').ignore()
+M.delta("Instructions", "face1",'f').ignore()
+M.delta("Instructions", "nop",'N').ignore()
+
+M.delta("turn1", "turn2", ':').ignore()
+M.delta("turn2", "Instructions2", 'o').ignore()
+M.delta("turn2", "Instructions2", 'O').ignore()
+M.delta("turn2", "Instructions2", 'Y').ignore()
+
+M.delta("face1", "face2",':').ignore()
+M.delta("face2", "Instructions2",'h').ignore()
+M.delta("nop","Instructions2", ':' ).ignore()
+
+M.delta("move1","move2",':').ignore()
+M.delta("move2","move3",'v').ignore()
+M.delta("move2","move3",'#').ignore()
+M.delta("move3","Instructions2","").ignore()
+	
+	//Comandos de dos parámetros
+M.delta("Instructions","MJTo1",'j').ignore()
+M.delta("Instructions","P1",'p').ignore()
+M.delta("Instructions", "MJin1", 'M').ignore()
+M.delta("Instructions", "assignTo1", 'a').ignore()
+
+M.delta("MJTo1","MJTo2",':').ignore()
+M.delta("MJTo2","MJTo3",'v').ignore()
+M.delta("MJTo2","MJTo3",'#').ignore()
+M.delta("MJTo3","MJTo4",',').ignore()
+M.delta("MJTo4", "Instructions2", 'l').ignore()
+M.delta("MJTo4", "Instructions2", 'L').ignore()
+M.delta("MJTo4", "Instructions2", 'o').ignore()	
+M.delta("MJTo4", "Instructions2", 'O').ignore()
+
+M.delta("P1","P2",':').ignore()
+M.delta("P2","P3",'v').ignore()
+M.delta("P2","P3",'#').ignore()
+M.delta("P3","P4",',').ignore()
+M.delta("P4","Instructions2",'c').ignore()
+
+M.delta("MJin1","MJin2",':').ignore()
+M.delta("MJin2","MJin3",'v').ignore()
+M.delta("MJin2","MJin3",'#').ignore()
+M.delta("MJin3","MJin4",',').ignore()
+M.delta("MJin4", "Instructions2",'h').ignore()
+
+M.delta("assignTo1", "assignTo2",":").ignore()
+M.delta("assignTo2", "assignTo3","#").ignore()
+M.delta("assignTo3", "assignTo4",",").ignore()
+M.delta("assignTo4", "Instructions2","v").ignore()
+
+
+	// Estrucuturas de control 
+M.delta("Instructions","repeat",'r').ignore()
+M.delta("Instructions","if",'i').ignore()
+M.delta("Instructions","while",'w').ignore()
+M.delta("Instructions","callProc",'v').ignore()
+
+
+
+M.delta("Instructions2","Instructions",';').ignore()
+M.delta("Instructions2","pr5]",']').pop("p")
+M.delta("Instructions2","blockEnd",']').pop("[") //[]
+   
+
+
+
+
+
+//Bloques
+   //Bloque general
+M.delta("block","Instructions","").push("[") // [
+   // Si al terminar el bloque lee un ']', es porque está dentro de una definición de una función, o dentro de un if, while o repeat 
+M.delta("blockEnd","pr5]",']').pop("p")
+M.delta("blockEnd","blockEnd",']').pop("[")
+	// Si al terminar un bloque detecta una 'e' (else), significa que estaba en un if
+M.delta("blockEnd", "if5else",'e').ignore()
+   // Si al terminar el bloque detecta un ';' , significa que sigue otra instrucción y que estaba en un while, if o repeat 
+M.delta("blockEnd","Instructions",';').ignore()
+
+
+
+
+//Estructuras de control if
+M.delta("if","if2:",':').push("i")
+M.delta("if2:","nCondition","").ignore()
+M.delta("if2:","condition","").ignore()
+   // El estado "if3then" es alcanzado en los condicionales
+M.delta("if3then","if4:",':').ignore()
+M.delta("if4:","block","[").ignore()
+	// El estado "if5else" es alcanzado en los bloques
+M.delta("if5else","if6:",':').pop("i")
+M.delta("if6:","block","[").ignore()
+
+//Estructura de control repeat
+M.delta("repeat","repeat2:",':').ignore()
+M.delta("repeat2:","repeat3idnt",'v').ignore()
+M.delta("repeat2:","repeat3idnt",'#').ignore()
+M.delta("repeat3idnt","block",'[').ignore()
+
+//Estructura de control while
+M.delta("while","while2:",':').push("w")
+M.delta("while2:", "nCondition","").ignore()
+M.delta("while2:", "condition","").ignore()
+	// El estado "while3do" es alcanzado en los condicionales
+M.delta("while3do","while4:",":").ignore()
+M.delta("while4:","block","[").pop("w")
+
+//Llamado a funciones (procs))
+M.delta("callProc","callProc2:",':').ignore()
+M.delta("callProc2:","callProc3idnt",'v').ignore()
+M.delta("callProc2:","callProc3idnt",'#').ignore()
+M.delta("callProc3idnt","callProc4,",',').ignore()
+M.delta("callProc4,","callProc3idnt",'#').ignore()
+M.delta("callProc4,","callProc3idnt",'v').ignore()
+M.delta("callProc3idnt","Instructions2","").ignore()
+
+
+
+	
+
+
+//Condicionales
+   //Manejo de negaciones en los condicionales
+M.delta("nCondition","not",'n').ignore()
+M.delta("not","not2:",':').ignore()
+M.delta("not2:","condition","").ignore()
+M.delta("not2:","not",'n').ignore()
+
+
+	//Manejo de los condicionales como tal
+M.delta("condition","facing", 'q').ignore()
+M.delta("facing","facing2:", ':').ignore()
+M.delta("facing2:", "facing3c",'h').ignore()
+M.delta("facing3c", "finCondicional","").ignore()
+
+M.delta("finCondicional","if3then",'T').ignore()
+M.delta("finCondicional","while3do",'d').ignore()
+
+M.delta("condition", "canM1", "w").ignore()
+M.delta("canM1", "canM2", ":").ignore()
+M.delta("canM2", "canM3", "#").ignore()
+M.delta("canM2", "canM3", "v").ignore()
+M.delta("canM3", "canM4", ",").ignore()
+M.delta("canM4", "finCondicional","h").ignore()
+
+M.delta("condition", "canT1", "s").ignore()
+M.delta("canT1", "canT2", ":").ignore()
+M.delta("canT2", "canT3", "#").ignore()
+M.delta("canT2", "canT3", "v").ignore()
+M.delta("canT3", "canT4", ",").ignore()
+M.delta("canT4", "finCondicional","l").ignore()
+M.delta("canT4", "finCondicional","L").ignore()
+M.delta("canT4", "finCondicional","o").ignore()	
+M.delta("canT4", "finCondicional","O").ignore()
+
+M.delta("condition", "canP1", "k").ignore()
+M.delta("canP1", "canP2", ":").ignore()
+M.delta("canP2", "canP3", "#").ignore()
+M.delta("canP2", "canP3", "v").ignore()
+M.delta("canP3", "canP4", ",").ignore()
+M.delta("canP4", "finCondicional","c").ignore()
+
+
+
+
+
+
+	
+ 
+
+
+
+
+
+
+
+
+ for each q in Q do
+ 	for each s in SkipChars do
+ 	   M.delta(q,q,λ+s).ignore()
+ end
+ end
+
+
+return M
+end
+

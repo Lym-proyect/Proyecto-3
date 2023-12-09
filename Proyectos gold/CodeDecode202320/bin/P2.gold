@@ -1,0 +1,142 @@
+using gold.**
+
+procedure main ( args : String [ ] ) begin
+c = createCoder ( )
+d = createCoder( )
+Utilities.testCodeDecode(c,d)
+end
+
+var w
+
+function createCoder ( ) : ITransducer begin
+
+estado = ('0'‥'3') ∪ {λ}
+w := ""
+
+Q := (estado × estado × estado × estado) ∪ {"Error"}
+Σ := ( 'a' ‥ 'z' ) ∪ ('0'‥'3') 
+Out := Σ ∪ {'*'} 
+q₀ := ⟨λ,λ,λ,λ⟩
+F := Q 
+return GDeterministicTransducer ( Q , Σ , Out , q₀ , F , δ , g , h )
+end
+
+
+
+function δ ( q, s ) begin
+	
+	return "Error"
+	
+end
+
+function δ (⟨d0, d1, d2, d3⟩, s) begin
+	
+	if d0 = λ and s ∈ ('0'‥'3') then return ⟨s, d1, d2, d3⟩
+		
+	elseif d1 = λ and s ∈ ('0'‥'3') then return ⟨d0, s, d2, d3⟩
+	
+	elseif d2 = λ and s ∈ ('0'‥'3') then return ⟨d0, d1, s, d3⟩
+	
+	elseif d3 = λ and s ∈ ('0'‥'3') then 
+		w = ""
+		return ⟨d0, d1, d2, s⟩
+	
+	elseif d3 != λ and s ∈ ('a'‥'z') then
+		
+		len := w.length()
+		
+		if len = 0 then
+			
+			w = Character.toString(s)
+			
+			return  ⟨d0, d1, d2, d3⟩
+			
+		elseif len = 1 then
+			
+			w = w + Character.toString(s)
+			
+			return ⟨d0, d1, d2, d3⟩
+
+  		elseif len = 2 then
+			
+			w = w + Character.toString(s)
+			return ⟨d0, d1, d2, d3⟩
+		elseif len = 3 then
+			
+			w = w + Character.toString(s)
+			return ⟨d0, d1, d2, d3⟩
+		elseif len = 4 then
+			w = Character.toString(s)
+			return ⟨d0, d1, d2, d3⟩
+		else return "Error"
+			
+		end
+		
+	else return "Error"
+		
+	end
+
+end
+
+function h(q,s) begin
+return λ
+end
+
+function g(q:String) begin
+	return λ
+end
+
+
+function g(⟨d0, d1, d2, d3⟩) begin
+	
+	 
+		 
+	len := w.length()
+	
+	if len = 0 and d0 != λ and d1 != λ and d2 != λ and d3 != λ  then
+		
+		 comboOriginal = new GArrayList()
+		
+	
+		 comboOriginal.add(Integer.parseInt(String.valueOf(d0)))
+		 comboOriginal.add(Integer.parseInt(String.valueOf(d1)))
+		 comboOriginal.add(Integer.parseInt(String.valueOf(d2)))
+		 comboOriginal.add(Integer.parseInt(String.valueOf(d3)))
+		 
+		 
+		 permutacionInversa = new GArrayList()
+		permutacionInversa.add(0)
+		permutacionInversa.add(0)
+		permutacionInversa.add(0)
+		permutacionInversa.add(0)
+		 
+		 permutacionInversa[comboOriginal[0]] = 0 
+		 permutacionInversa[comboOriginal[1]] = 1
+		 permutacionInversa[comboOriginal[2]] = 2
+		 permutacionInversa[comboOriginal[3]] = 3
+		 
+		 return String.valueOf(permutacionInversa[0]) +  String.valueOf(permutacionInversa[1]) +  String.valueOf(permutacionInversa[2]) +  String.valueOf(permutacionInversa[3])
+	elseif len = 4 and d0 != λ and d1 != λ and d2 != λ and d3 != λ then
+		w_x = w //+ s
+		
+		return "" + String.valueOf(w_x.charAt(Integer.parseInt(String.valueOf(d0)))) + String.valueOf(w_x.charAt(Integer.parseInt(String.valueOf(d1)))) + String.valueOf(w_x.charAt(Integer.parseInt(String.valueOf(d2)))) + String.valueOf(w_x.charAt(Integer.parseInt(String.valueOf(d3))))
+		
+	elseif len != 4 and d0 != λ and d1 != λ and d2 != λ and d3 != λ  then
+		return λ
+		
+	elseif len = 1 and d0 != λ and d1 != λ and d2 != λ and d3 != λ then
+		return  w + "***" 
+	
+	elseif len = 2 and d0 != λ and d1 != λ and d2 != λ and d3 != λ then
+		return  w + "**" 
+	
+	elseif len = 3 and d0 != λ and d1 != λ and d2 != λ and d3 != λ then
+		return  w + "*" 
+		
+	else
+		return λ
+		
+	end
+endr
+
+
