@@ -15,7 +15,7 @@ public final class Pila {
     Object $result=null;
     $try:try {
       $line=5;
-      GAutomataFrame.show($cast(gold.structures.automaton.IAutomaton.class,$invokeMethod(Pila.class,"createAutomaton",true,null,new Object[]{})));
+      GAutomataFrame.show($cast(gold.structures.automaton.IAutomaton.class,Pila.createAutomaton()));
     }
     catch (Throwable $throwable) {
       $rethrow($throwable,Pila.class,"main",$line);

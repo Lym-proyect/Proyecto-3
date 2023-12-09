@@ -15,7 +15,7 @@ public final class SamuelAyala {
     Object $result=null;
     $try:try {
       $line=6;
-      Object c=$fix($invokeMethod(SamuelAyala.class,"createCoder",true,null,new Object[]{}));
+      Object c=$fix(SamuelAyala.createCoder());
       $line=7;
       GAutomataFrame.show($cast(gold.structures.automaton.IAutomaton.class,c));
     }
