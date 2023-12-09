@@ -1,0 +1,161 @@
+using gold.**
+
+toSet(C) :=  {x|  x in C}
+
+///====   mini Parser===
+
+function createParser(A):IPushdownAutomaton begin
+	Q:= (0‥15)
+	
+	Σ:= toSet(A)  ∪ {' ', '\n'}
+	
+	Γ:={'P','C','I','B','S','D','O','M','1'}
+	q₀:=0
+	F:= {0}
+	M:=GPushdownAutomaton(Q,Σ,Γ,q₀,F)
+	SkipChars := {' ', 't', '\n'}   // this will only  be used when testing only the parser as the lexer removes  SkipChars
+	
+	// transitions for defVar
+	M.delta(0,1,"V").push("1I")
+	M.delta(1,2,"i").pop("I")
+	M.delta(2,0,"#").pop("1")
+	
+	// transitions for defProc
+	M.delta(0,5,"Pi(").push("P1")
+	M.delta(5,10,")").pop("P1")
+	M.delta(6,0,")").pop("P")
+	
+	// transition for command blocks
+	M.delta(0,1,"{").push("B")
+	M.delta(1,0,"}").pop("B")
+	M.delta(4,0,"}").pop("BM")
+	M.delta(0,1,";").ignore()
+	
+	// transitions directions
+	M.delta(2,3,"f").pop("D")
+	M.delta(2,3,"l").pop("D")
+	M.delta(2,3,"b").pop("D")
+	M.delta(2,3,"r").pop("D")
+	
+	// transitions orientations
+	M.delta(2,3,"s").pop("O")
+	M.delta(2,3,"w").pop("O")
+	M.delta(2,3,"e").pop("O")
+	M.delta(2,3,"n").pop("O")
+	
+	// transitions numbers and variables
+	M.delta(2,3,"#").pop("1")
+	M.delta(2,3,"i").pop("1")
+	M.delta(5,6,"#").pop("1")
+	M.delta(5,6,"i").pop("1")
+	M.delta(6,5,",").push("1")
+	
+	// SIMPLE COMMANDS ======================================================================
+	
+	// General transitions for commands
+	M.delta(3,2,",").pop("S")
+	M.delta(3,4,")").pop("C")
+	M.delta(4,1,";").pop("M")
+	
+	// transitions for assignment
+	M.delta(1,12,"i").push("MIS")
+	M.delta(11,12,"i").push("MIS")
+	M.delta(12,13,"=").pop("S")
+	M.delta(13,4,"#").pop("I")
+	
+	// transitions for jump
+	M.delta(1,2,"J(").push("MC1S1")
+	M.delta(11,2,"J(").push("MC1S1")
+	
+	// transitions for walk
+	M.delta(1,2,"K(").push("MC1")
+	M.delta(1,2,"K(").push("MCDS1")
+	M.delta(1,2,"K(").push("MCOS1")
+	M.delta(11,2,"K(").push("MC1")
+	M.delta(11,2,"K(").push("MCDS1")
+	M.delta(11,2,"K(").push("MCOS1")
+	
+	// transitions for leap
+	M.delta(1,2,"L(").push("MC1")
+	M.delta(1,2,"L(").push("MCDS1")
+	M.delta(1,2,"L(").push("MCOS1")
+	M.delta(11,2,"L(").push("MC1")
+	M.delta(11,2,"L(").push("MCDS1")
+	M.delta(11,2,"L(").push("MCOS1")
+	
+	// transitions for turn
+	M.delta(1,12,"t(").push("MCD")
+	M.delta(11,12,"t(").push("MCD")
+	M.delta(12,3,"l").pop("D")
+	M.delta(12,3,"r").pop("D")	
+	M.delta(12,3,"a").pop("D")
+	
+	// transitions for turnto
+	M.delta(1,2,"T(").push("MCO")
+	M.delta(11,2,"T(").push("MCO")
+	
+	// transitions for drop
+	M.delta(1,2,"D(").push("MC1")
+	M.delta(11,2,"D(").push("MC1")
+	
+	// transitions for get
+	M.delta(1,2,"G(").push("MC1")
+	M.delta(11,2,"G(").push("MC1")
+	
+	// transitions for grab
+	M.delta(1,2,"B(").push("MC1")
+	M.delta(11,2,"B(").push("MC1")
+	
+	// transitions for letgo
+	M.delta(1,2,"&(").push("MC1")
+	M.delta(11,2,"&(").push("MC1")
+	
+	// transitions for nop
+	M.delta(1,3,"O(").push("MC")
+	M.delta(11,3,"O(").push("MC")
+	
+	// transitions for procs
+	M.delta(1,5,"i(").push("P1")
+	M.delta(5,1,");").pop("P1")
+	M.delta(6,1,");").pop("P")
+	
+	// CONTROL STRUCTURE ======================================================================
+	
+	// transitions for inner command block
+	M.delta(10,1,"{").push("B")
+	M.delta(0,0,"}").pop("B")
+	
+	// transitions for if - else
+	M.delta(1,7,"F").push("C")
+	M.delta(0,10,"E").pop("C")
+	
+	// transitions for while
+	M.delta(1,7,"W").ignore()
+	
+	// transitions for repeat times
+	M.delta(1,2,"R").push("C1")
+	M.delta(3,10,"S").pop("C")
+	
+	// CONDITIONS ======================================================================
+	
+	// transitions for can
+	M.delta(7,11,"C(").push("C")
+	M.delta(4,10,")").pop("CM")
+	
+	// transitions for facing
+	M.delta(7, 2, "|(").push("CO")
+	M.delta(3,10,")").pop("C")
+	
+	// transitions for not
+	M.delta(7,9,"N").push("C")
+	M.delta(9,7,":").pop("C")
+	
+	for each q in Q do
+		for each s in SkipChars do
+			M.delta(q,q,λ+s).ignore()
+	 	end
+	end
+	
+	return M
+end
+
