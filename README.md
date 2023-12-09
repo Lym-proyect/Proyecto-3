@@ -1,3 +1,3 @@
 # Proyecto-3
-El día de ayer tuvimos varías complicaciones para poder subir los archivos del P3 ya que al intentar hacer el commint se subieron accidentalmente todos los archivos dentro del workspace, 
-sin embargo estos se subieron dentro de la carpeta PQ_1
+
+Ayer enfrentamos diversas complicaciones al intentar cargar los archivos del P3. Al realizar el commit, todos los archivos dentro del espacio de trabajo se cargaron accidentalmente. No obstante, es importante señalar que el proyecto en cuestión se encuentra dentro de la carpeta PQ_1.
